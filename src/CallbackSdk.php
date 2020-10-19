@@ -2,8 +2,8 @@
 
 namespace Es3\Callback;
 
-use EasySwoole\Core\AbstractInterface\Singleton;
-use EasySwoole\Core\Utility\File;
+use EasySwoole\Component\Singleton;
+use \Es3\Utility\File;
 
 class CallbackSdk
 {
@@ -13,10 +13,10 @@ class CallbackSdk
     {
         /** 先删除 */
         $targetModule = EASYSWOOLE_ROOT . '/App/Module/Callback/';
-        File::deleteDir($targetModule);
+        File::deleteDirectory($targetModule);
 
         /** 后复制 */
         $sdkModule = EASYSWOOLE_ROOT . '/vendor/alanchen365/callback-sdk-es3/src/Module/Callback/';
-        File::copyDir($sdkModule, $targetModule);
+        File::copyDirectory($sdkModule, $targetModule);
     }
 }
