@@ -2,6 +2,8 @@
 
 namespace App\Module\Callback\Service;
 
+use App\Constant\EnvConst;
+use App\Module\Callback\CallbackConstant;
 use App\Module\Callback\Dao\TaskDao;
 use App\Module\Callback\Dao\TaskLogDao;
 use App\Module\Callback\Model\TaskLogModel;
@@ -105,6 +107,9 @@ class TaskLogService extends BaseCallbackService
 
         $task->update($params);
         $taskLog->update($params);
+
+        $redis = \EasySwoole\RedisPool\Redis::defer(EnvConst::REDIS_KEY);
+        $redis->lPush(redisKey(CallbackConstant::REDIS_CALL_LIST, $status), $status);
     }
 
     /**

@@ -107,8 +107,8 @@ class TaskService extends BaseCallbackService
             $logService->isSuccess($taskCode, $task, $taskLog->getAttr('id'));
 
             /** 保留最近10条log */
-            $taskLogDao->clearLog($taskCode, 5);
-
+            $taskLogDao->clearLog($taskCode, 3);
+            
             /** 解锁 */
             $lock->unlock();
         } catch (ErrorException $e) {

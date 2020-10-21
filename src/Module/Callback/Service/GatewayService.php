@@ -2,9 +2,13 @@
 
 namespace App\Module\Callback\Service;
 
+use App\Constant\EnvConst;
+use App\Module\Callback\CallbackConstant;
 use App\Module\Callback\Dao\ApiDao;
+use App\Module\Callback\Dao\TaskDao;
 use App\Module\Callback\Type\TaskType;
 use App\Module\Callback\Validate\TaskValidate;
+use EasySwoole\EasySwoole\Task\TaskManager;
 use EasySwoole\ORM\Db\ClientInterface;
 use EasySwoole\ORM\DbManager;
 use Es3\Exception\WaringException;
@@ -33,9 +37,34 @@ class GatewayService
             }
 
             !$isTransaction ? DbManager::getInstance()->commit() : null;
+
+            /** 任务投递成功后发布 */
+            $redis = \EasySwoole\RedisPool\Redis::defer(EnvConst::REDIS_KEY);
+            $redis->publish(redisKey(CallbackConstant::REDIS_CALL_CHANNEL), 'INVALID');
+
         } catch (\Throwable $throwable) {
             !$isTransaction ? DbManager::getInstance()->rollback() : null;
             throw new WaringException($throwable->getCode(), '任务投递异常:' . $throwable->getMessage());
+        }
+    }
+
+    /**
+     * 开始调用任务
+     */
+    public function call(array $status)
+    {
+        $taskDao = new TaskDao();
+        $taskService = new TaskService();
+
+        $taskList = $taskDao->taskList($status);
+        if (superEmpty($taskList)) {
+            return;
+        }
+
+        foreach ($taskList as $key => $task) {
+            TaskManager::getInstance()->async(function () use ($taskService, $task) {
+                $taskService->main($task);
+            });
         }
     }
 }
