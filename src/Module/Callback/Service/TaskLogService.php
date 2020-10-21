@@ -8,7 +8,10 @@ use App\Module\Callback\Dao\TaskDao;
 use App\Module\Callback\Dao\TaskLogDao;
 use App\Module\Callback\Model\TaskLogModel;
 use App\Module\Callback\Model\TaskModel;
+use App\Module\Callback\Queue\TaskErrorQueue;
+use App\Module\Callback\Queue\TaskFailQueue;
 use EasySwoole\HttpClient\Bean\Response;
+use EasySwoole\Queue\Job;
 use Es3\Call\Curl;
 use Es3\Exception\ErrorException;
 use Es3\Exception\WaringException;
@@ -96,20 +99,25 @@ class TaskLogService extends BaseCallbackService
         /** 如果是error状态 说明请求没有到达对方那里*/
         if ($taskLogStatus == 'ERROR') {
             $status = 'ERROR';
+
+            $job = new Job();
+            $job->setJobData($taskCodes);
+            TaskErrorQueue::getInstance()->producer()->push($job);
         } else {
-            $status = 'FAIL';
             if ($businessCode >= 100000) {
                 $status = 'SUCCESS';
+            } else {
+                $status = 'FAIL';
+                $job = new Job();
+                $job->setJobData($taskCodes);
+                TaskFailQueue::getInstance()->producer()->push($job);
             }
         }
 
         $params = ['status' => $status];
-
+        
         $task->update($params);
         $taskLog->update($params);
-
-        $redis = \EasySwoole\RedisPool\Redis::defer(EnvConst::REDIS_KEY);
-        $redis->lPush(redisKey(CallbackConstant::REDIS_CALL_LIST, $status), $status);
     }
 
     /**
