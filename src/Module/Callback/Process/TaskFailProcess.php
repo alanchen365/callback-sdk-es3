@@ -35,7 +35,7 @@ class TaskFailProcess extends AbstractProcess
     protected function run($arg)
     {
         /** 2分钟重新通信一次 */
-        \EasySwoole\Component\Timer::getInstance()->loop(1 * 60 * 1000, function () {
+        \EasySwoole\Component\Timer::getInstance()->loop(2 * 60 * 1000, function () {
 
             $job = TaskFailQueue::getInstance()->consumer()->pop();
             if ($job) {
