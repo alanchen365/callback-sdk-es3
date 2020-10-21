@@ -3,6 +3,7 @@
 namespace App\Module\Callback\Service;
 
 use App\Constant\ResultConst;
+use App\Module\Callback\CallbackConstant;
 use App\Module\Callback\Dao\TaskDao;
 use App\Module\Callback\Dao\TaskLogDao;
 use App\Module\Callback\Model\TaskModel;
@@ -107,8 +108,8 @@ class TaskService extends BaseCallbackService
             $logService->isSuccess($taskCode, $task, $taskLog->getAttr('id'));
 
             /** 保留最近10条log */
-            $taskLogDao->clearLog($taskCode, 3);
-            
+            $taskLogDao->clearLog($taskCode, CallbackConstant::SAVE_LOG_COUNT);
+
             /** 解锁 */
             $lock->unlock();
         } catch (ErrorException $e) {

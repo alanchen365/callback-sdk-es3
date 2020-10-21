@@ -23,6 +23,7 @@ class SystemApiDao extends BaseCallbackDao
 
     public function pushList(string $apiCode): array
     {
+        $env = strtoupper(env());
         $sql = "SELECT SQL_CALC_FOUND_ROWS
                 system.system_name,
                 system.request_header,
@@ -39,7 +40,8 @@ class SystemApiDao extends BaseCallbackDao
                 left join `callback_system` system
                 on system_api.system_code = system.system_code
                 where api.delete_flg =0 and system.delete_flg = 0
-              and api.api_code = '$apiCode'
+              and api.api_code = '$apiCode' 
+              and system.env = '$env'
               ";
 
         $list = $this->query($sql);

@@ -38,7 +38,7 @@ class TaskErrorProcess extends AbstractProcess
             TaskErrorQueue::getInstance()->consumer()->listen(function () {
 
                 /** 调用出错的2秒中再次调用 */
-                \co::sleep(rand(2, 16));
+                \co::sleep(rand(30, 60));
                 
                 $gatewayService = new GatewayService();
                 $gatewayService->call(['ERROR']);

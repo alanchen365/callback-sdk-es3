@@ -42,8 +42,8 @@ class TaskInvalidProcess extends AbstractProcess
             try {
                 /** 一次都没调用过的 需要优先调用 */
                 $gatewayService = new GatewayService();
-                $gatewayService->call($message);
-                
+                $gatewayService->call([$message]);
+
             } catch (\Throwable $throwable) {
                 Logger::getInstance()->waring($throwable->getMessage(), 'CallProcess');
             }

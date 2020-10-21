@@ -38,8 +38,8 @@ class TaskFailProcess extends AbstractProcess
             TaskFailQueue::getInstance()->consumer()->listen(function () {
 
                 /** 调用失败的 30秒再次调用 */
-                \co::sleep(rand(30, 60));
-                
+                \co::sleep(rand(60, 180));
+
                 $gatewayService = new GatewayService();
                 $gatewayService->call(['FAIL']);
             });
