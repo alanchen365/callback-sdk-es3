@@ -34,15 +34,23 @@ class TaskErrorProcess extends AbstractProcess
 
     protected function run($arg)
     {
-        go(function () {
-            TaskErrorQueue::getInstance()->consumer()->listen(function () {
+        /** 2分钟重新通信一次 */
+        \EasySwoole\Component\Timer::getInstance()->loop(1 * 60 * 1000, function () {
 
-                /** 调用出错的2秒中再次调用 */
-                \co::sleep(rand(30, 60));
-                
+            $job = TaskErrorQueue::getInstance()->consumer()->pop();
+            if ($job) {
+                /** 剩下的队列都弹完 */
+                while (true) {
+
+                    $job = TaskErrorQueue::getInstance()->consumer()->pop();
+                    if (!$job) {
+                        break;
+                    }
+                }
+
                 $gatewayService = new GatewayService();
                 $gatewayService->call(['ERROR']);
-            });
+            }
         });
     }
 

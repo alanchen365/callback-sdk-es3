@@ -34,15 +34,23 @@ class TaskFailProcess extends AbstractProcess
 
     protected function run($arg)
     {
-        go(function () {
-            TaskFailQueue::getInstance()->consumer()->listen(function () {
+        /** 2分钟重新通信一次 */
+        \EasySwoole\Component\Timer::getInstance()->loop(1 * 60 * 1000, function () {
 
-                /** 调用失败的 30秒再次调用 */
-                \co::sleep(rand(60, 180));
+            $job = TaskFailQueue::getInstance()->consumer()->pop();
+            if ($job) {
+                /** 剩下的队列都弹完 */
+                while (true) {
+
+                    $job = TaskFailQueue::getInstance()->consumer()->pop();
+                    if (!$job) {
+                        break;
+                    }
+                }
 
                 $gatewayService = new GatewayService();
                 $gatewayService->call(['FAIL']);
-            });
+            }
         });
     }
 

@@ -37,7 +37,7 @@ class TaskLogDao extends BaseCallbackDao
             return;
         }
 
-        if (count($ids) <= $keep) {
+        if (count($ids) < $keep) {
             return;
         }
 
