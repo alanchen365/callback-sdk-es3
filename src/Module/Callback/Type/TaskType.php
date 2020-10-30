@@ -8,6 +8,7 @@ class TaskType extends SplBean
 {
     protected $apiCode;
     protected $requestParams;
+    protected $requestHeader;
     protected $taskCode;
 
     /**
@@ -56,5 +57,21 @@ class TaskType extends SplBean
     public function setTaskCode($taskCode): void
     {
         $this->taskCode = $taskCode;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRequestHeader()
+    {
+        return $this->requestHeader;
+    }
+
+    /**
+     * @param mixed $requestHeader
+     */
+    public function setRequestHeader($requestHeader): void
+    {
+        $this->requestHeader = $requestHeader;
     }
 }
