@@ -20,7 +20,7 @@ class TaskDao extends BaseCallbackDao
      */
     public function taskList(array $status): array
     {
-        $list = $this->getAll(['status' => [$status, 'IN'], 'env' => strtoupper(env())]);
+        $list = $this->getAll(['status' => [$status, 'IN'], 'env' => strtoupper(env())], [], ['id' => 'asc']);
         return $list[ResultConst::RESULT_LIST_KEY] ?? [];
     }
 
