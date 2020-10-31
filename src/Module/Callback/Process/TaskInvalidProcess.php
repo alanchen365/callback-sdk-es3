@@ -39,6 +39,8 @@ class TaskInvalidProcess extends AbstractProcess
         $redis = \EasySwoole\RedisPool\Redis::defer(EnvConst::REDIS_KEY);
         $redis->subscribe(function ($instance, $channel, $message) {
 
+            Logger::getInstance()->waring('消息被订阅', 'TaskInvalid');
+
             try {
                 /** 一次都没调用过的 需要优先调用 */
                 $gatewayService = new GatewayService();
