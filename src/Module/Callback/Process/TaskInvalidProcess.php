@@ -42,6 +42,8 @@ class TaskInvalidProcess extends AbstractProcess
             Logger::getInstance()->waring('消息被订阅', 'TaskInvalid');
 
             try {
+                sleep(rand(3, 6));
+
                 /** 一次都没调用过的 需要优先调用 */
                 $gatewayService = new GatewayService();
                 $gatewayService->call([$message]);
