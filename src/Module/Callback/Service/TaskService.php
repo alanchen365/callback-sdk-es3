@@ -49,12 +49,12 @@ class TaskService extends BaseCallbackService
             }
             $taskCode = md5($taskCode . $push['system_code'] ?? null);
             $headers = array_merge(json_decode($push['request_header'], true) ?? [], $task->getRequestHeader() ?? []);
-            
+
             $tasks[] = [
                 'task_code' => md5($taskCode),
                 'domain' => $push['domain'],
                 'path' => $push['path'],
-                'request_header' => $headers,
+                'request_header' => json_encode($headers),
                 'request_method' => $push['request_method'],
                 'request_type' => $push['request_type'],
                 'request_param' => json_encode($task->getRequestParams()),
