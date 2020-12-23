@@ -63,13 +63,14 @@ class GatewayService
         }
 
         foreach ($taskList as $key => $task) {
-            TaskManager::getInstance()->async(function () use ($taskService, $task) {
-                try {
-                    $taskService->main($task);
-                }catch (\Throwable $throwable){
-                    Logger::getInstance()->log($throwable->getMessage(), Logger::LOG_LEVEL_ERROR, 'callback-process');
-                }
-            });
+            $taskService->main($task);
+//            TaskManager::getInstance()->async(function () use ($taskService, $task) {
+//                try {
+//                    $taskService->main($task);
+//                }catch (\Throwable $throwable){
+//                    Logger::getInstance()->log($throwable->getMessage(), Logger::LOG_LEVEL_ERROR, 'callback-process');
+//                }
+//            });
         }
     }
 }
