@@ -74,5 +74,6 @@ class TaskProcess extends AbstractProcess
          * 该回调可选
          * 当该进程出现异常的时候，会执行该回调
          */
+        Logger::getInstance()->log($throwable->getMessage(), Logger::LOG_LEVEL_ERROR, 'callback-process');
     }
 }
