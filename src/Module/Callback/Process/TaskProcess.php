@@ -34,21 +34,21 @@ class TaskProcess extends AbstractProcess
 
     protected function run($arg)
     {
-        Logger::getInstance()->log('started ...', Logger::LOG_LEVEL_INFO, 'callback-process');
-
-        /** 2分钟重新通信一次 */
-        \EasySwoole\Component\Timer::getInstance()->loop(1 * 60 * 1000, function () {
-            try {
-                $gatewayService = new GatewayService();
-                $gatewayService->call(['INVALID', 'ERROR', 'RUN', 'FAIL']);
-
-                Logger::getInstance()->log('running ...', Logger::LOG_LEVEL_INFO, 'callback-process');
-            } catch (\Throwable $throwable) {
-                Logger::getInstance()->log($throwable->getMessage(), Logger::LOG_LEVEL_ERROR, 'callback-process');
-            }
-        });
-
-        Logger::getInstance()->log('end ...', Logger::LOG_LEVEL_INFO, 'callback-process');
+//        Logger::getInstance()->log('started ...', Logger::LOG_LEVEL_INFO, 'callback-process');
+//
+//        /** 2分钟重新通信一次 */
+////        \EasySwoole\Component\Timer::getInstance()->loop(1 * 60 * 1000, function () {
+//        try {
+//            $gatewayService = new GatewayService();
+//            $gatewayService->call(['INVALID', 'ERROR', 'RUN', 'FAIL']);
+//
+//            Logger::getInstance()->log('running ...', Logger::LOG_LEVEL_INFO, 'callback-process');
+//        } catch (\Throwable $throwable) {
+//            Logger::getInstance()->log($throwable->getMessage(), Logger::LOG_LEVEL_ERROR, 'callback-process');
+//        }
+////        });
+//
+////        Logger::getInstance()->log('end ...', Logger::LOG_LEVEL_INFO, 'callback-process');
     }
 
     protected function onPipeReadable(Process $process)
