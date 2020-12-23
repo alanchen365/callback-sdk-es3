@@ -36,7 +36,7 @@ class TaskProcess extends AbstractProcess
     {
         Logger::getInstance()->log('started ...', Logger::LOG_LEVEL_INFO, 'callback-process');
 
-        \EasySwoole\Component\Timer::getInstance()->loop(1 * 2 * 1000, function () {
+        \EasySwoole\Component\Timer::getInstance()->loop(1 * 30 * 1000, function () {
             try {
                 $gatewayService = new GatewayService();
                 $gatewayService->call(['INVALID', 'ERROR', 'RUN', 'FAIL']);
