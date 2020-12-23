@@ -9,6 +9,7 @@ use App\Module\Callback\Dao\TaskLogDao;
 use App\Module\Callback\Model\TaskModel;
 use App\Module\Callback\Type\TaskType;
 use App\Module\Callback\Validate\TaskValidate;
+use EasySwoole\EasySwoole\Logger;
 use EasySwoole\EasySwoole\Task\TaskManager;
 use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\Db\ClientInterface;
@@ -114,6 +115,7 @@ class TaskService extends BaseCallbackService
             /** 解锁 */
             $lock->unlock();
         } catch (ErrorException $e) {
+            Logger::getInstance()->log($e->getMessage(), Logger::LOG_LEVEL_ERROR, 'callback-process');
             $lock instanceof \swoole_lock ? $lock->unlock() : null;
         }
     }

@@ -8,6 +8,7 @@ use App\Module\Callback\Dao\ApiDao;
 use App\Module\Callback\Dao\TaskDao;
 use App\Module\Callback\Type\TaskType;
 use App\Module\Callback\Validate\TaskValidate;
+use EasySwoole\EasySwoole\Logger;
 use EasySwoole\EasySwoole\Task\TaskManager;
 use EasySwoole\ORM\Db\ClientInterface;
 use EasySwoole\ORM\DbManager;
@@ -63,7 +64,11 @@ class GatewayService
 
         foreach ($taskList as $key => $task) {
             TaskManager::getInstance()->async(function () use ($taskService, $task) {
-                $taskService->main($task);
+                try {
+                    $taskService->main($task);
+                }catch (\Throwable $throwable){
+                    Logger::getInstance()->log($throwable->getMessage(), Logger::LOG_LEVEL_ERROR, 'callback-process');
+                }
             });
         }
     }
