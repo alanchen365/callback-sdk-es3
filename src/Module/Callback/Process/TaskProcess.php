@@ -34,10 +34,10 @@ class TaskProcess extends AbstractProcess
 
     protected function run($arg)
     {
-        /** 60分钟重新通信一次 */
-        \EasySwoole\Component\Timer::getInstance()->loop(60 * 60 * 1000, function () {
+        /** 2分钟重新通信一次 */
+        \EasySwoole\Component\Timer::getInstance()->loop(2 * 60 * 1000, function () {
             $gatewayService = new GatewayService();
-            $gatewayService->call(['INVALID']);
+            $gatewayService->call(['INVALID', 'ERROR', 'RUN', 'FAIL']);
         });
     }
 
