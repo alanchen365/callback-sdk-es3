@@ -37,20 +37,23 @@ class TaskFailProcess extends AbstractProcess
         /** 2分钟重新通信一次 */
         \EasySwoole\Component\Timer::getInstance()->loop(2 * 60 * 1000, function () {
 
-            $job = TaskFailQueue::getInstance()->consumer()->pop();
-            if ($job) {
-                /** 剩下的队列都弹完 */
-                while (true) {
+            $gatewayService = new GatewayService();
+            $gatewayService->call(['FAIL']);
 
-                    $job = TaskFailQueue::getInstance()->consumer()->pop();
-                    if (!$job) {
-                        break;
-                    }
-                }
-
-                $gatewayService = new GatewayService();
-                $gatewayService->call(['FAIL']);
-            }
+//            $job = TaskFailQueue::getInstance()->consumer()->pop();
+//            if ($job) {
+//                /** 剩下的队列都弹完 */
+//                while (true) {
+//
+//                    $job = TaskFailQueue::getInstance()->consumer()->pop();
+//                    if (!$job) {
+//                        break;
+//                    }
+//                }
+//
+//                $gatewayService = new GatewayService();
+//                $gatewayService->call(['FAIL']);
+//            }
         });
     }
 
