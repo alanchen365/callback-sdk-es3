@@ -40,13 +40,13 @@ class TaskErrorProcess extends AbstractProcess
             $job = TaskErrorQueue::getInstance()->consumer()->pop();
             if ($job) {
                 /** 剩下的队列都弹完 */
-                while (true) {
-
-                    $job = TaskErrorQueue::getInstance()->consumer()->pop();
-                    if (!$job) {
-                        break;
-                    }
-                }
+//                while (true) {
+//
+//                    $job = TaskErrorQueue::getInstance()->consumer()->pop();
+//                    if (!$job) {
+//                        break;
+//                    }
+//                }
 
                 $gatewayService = new GatewayService();
                 $gatewayService->call(['ERROR']);
