@@ -39,6 +39,7 @@ class TaskLogService extends BaseCallbackService
             $params = $task->getAttr('request_param');
 
             $curl = new Curl($url);
+            $curl->setTimeout(30);
             $curl->setIs200(false);
 
             /** 调用方式 */
