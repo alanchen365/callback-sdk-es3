@@ -24,11 +24,16 @@ class SystemApiDao extends BaseCallbackDao
     public function pushList(string $apiCode): array
     {
         $env = strtoupper(env());
-        $sql = "SELECT SQL_CALC_FOUND_ROWS
+        $sql = "SELECT
+                system.id system_id,
                 system.system_name,
                 system.request_header,
                 system.system_code,
                 system.domain,
+                system.response_key_code,
+                system.response_key_msg,
+                system.response_success_condition,
+                system.response_success_value,
                 api.api_code,
                 api.api_name,
                 api.path,
@@ -45,6 +50,6 @@ class SystemApiDao extends BaseCallbackDao
               ";
 
         $list = $this->query($sql);
-        return $list[ResultConst::RESULT_LIST_KEY];
+        return $list;
     }
 }

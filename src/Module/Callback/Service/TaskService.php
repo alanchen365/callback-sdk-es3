@@ -5,12 +5,12 @@ namespace App\Module\Callback\Service;
 use App\Constant\ResultConst;
 use App\Module\Callback\CallbackConstant;
 use App\Module\Callback\Dao\TaskDao;
-use App\Module\Callback\Dao\TaskLogDao;
 use App\Module\Callback\Model\TaskModel;
 use App\Module\Callback\Type\TaskType;
 use App\Module\Callback\Validate\TaskValidate;
 use EasySwoole\EasySwoole\Logger;
 use EasySwoole\EasySwoole\Task\TaskManager;
+use EasySwoole\HttpClient\Bean\Response;
 use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\Db\ClientInterface;
 use EasySwoole\ORM\DbManager;
@@ -19,6 +19,7 @@ use Es3\Exception\ErrorException;
 use Es3\Exception\NoticeException;
 use Es3\Exception\WaringException;
 use Es3\Lock\FileLock;
+use Es3\Utility\Random;
 
 class TaskService extends BaseCallbackService
 {
@@ -43,6 +44,18 @@ class TaskService extends BaseCallbackService
         $tasks = [];
         foreach ($pushList as $key => $push) {
 
+            //response_success_condition 和 response_success_value 是否都传递了
+            $successCondition = $push['response_success_condition'];
+            $successValue = $push['response_success_value'];
+
+            if (superEmpty($successCondition)) {
+                throw new NoticeException(7013, "system没有配置response_success_condition字段");
+            }
+
+            if (superEmpty($successValue)) {
+                throw new NoticeException(7014, "system没有配置response_success_value字段");
+            }
+
             /** 获取task code */
             $taskCode = $task->getTaskCode();
             if (superEmpty($taskCode)) {
@@ -53,6 +66,7 @@ class TaskService extends BaseCallbackService
 
             $tasks[] = [
                 'task_code' => md5($taskCode),
+                'system_id' => $push['system_id'],
                 'domain' => $push['domain'],
                 'path' => $push['path'],
                 'request_header' => json_encode($headers),
@@ -86,12 +100,11 @@ class TaskService extends BaseCallbackService
         $this->getDao()->insertAll($tasks);
     }
 
-    public function main(TaskModel $task)
+    public function main($task)
     {
-        $logService = new TaskLogService();
-        $taskLogDao = new TaskLogDao();
+        $logService = new TaskService();
 
-        $taskCode = $task->getAttr('task_code');
+        $taskCode = $task['task_code'] ?? Random::makeUUIDV4();
         $response = null;
         try {
             $lock = FileLock::get($taskCode);
@@ -99,18 +112,103 @@ class TaskService extends BaseCallbackService
 
             /** 更新请求日志 */
             $taskParams = ['status' => 'RUN', 'request_count' => QueryBuilder::inc(1)];
-            $task->update($taskParams);
+            TaskModel::create()->update($taskParams, ['id' => $task['id']]);
 
-            $taskLog = $taskLogDao->createLog($task);
+            /** 参数整理 */
+            $response = null;
+            $result = '';
+            $startTime = microtime(true);
 
-            /** 发送请求  */
-            $logService->call($task, $taskLog);
+            try {
+                $url = $task['domain'] . $task['path'];
 
-            /** 判断最终请求是否成功 */
-            $logService->isSuccess($taskCode, $task, $taskLog->getAttr('id'));
+                $method = $task['request_method'];
+                $headers = json_decode($task['request_header'], true);
+                $headers = superEmpty($headers) ? [] : $headers;
+                $params = $task['request_param'];
 
-            /** 保留最近10条log */
-            $taskLogDao->clearLog($taskCode, CallbackConstant::SAVE_LOG_COUNT);
+                $curl = new Curl($url);
+                $curl->setTimeout(30);
+                $curl->setIs200(false);
+
+                /** 调用方式 */
+                if ('JSON' == $task['request_type']) {
+                    $curl->setHeader('Content-type', 'application/json;charset=utf-8');
+                }
+                
+                /** 是否为跨环境调用 */
+                if (strtoupper(env()) != strtoupper($task['env'])) {
+                    throw new WaringException(7110, '环境存在差异');
+                }
+
+                switch (strtolower($method)) {
+
+                    case 'get':
+                        $response = $curl->get();
+                        break;
+                    case 'post':
+                        $response = $curl->post($params, $headers);
+                        break;
+                    case 'put':
+                        $response = $curl->put($params, $headers);
+                        break;
+                    case 'delete':
+                        $response = $curl->delete();
+                        break;
+                }
+            } catch (\Throwable $throwable) {
+                $result = "请求失败 code:" . $throwable->getCode() . ' message:' . $throwable->getMessage();
+            }
+
+            /** 判断请求成功还是失败 */
+            $duration = round(microtime(true) - $startTime, 5);
+            if ($response instanceof Response) {
+                $requestBody = json_decode($response->getBody(), true);
+
+                /** 获取执行结果 */
+                $responseBusinessKeyCode = $task['response_key_code'];
+                $responseKeyMsg = $task['response_key_msg'];
+                $result = $requestBody[$responseKeyMsg];
+                $requestCode = $requestBody[$responseBusinessKeyCode];
+
+                /** 判断请求失败还是成功 */
+                $successCondition = $task['response_success_condition'];
+                $successValue = $task['response_success_value'];
+
+                # 响应成功条件 GT大于，GE大于或等于，NE是不等于，EQ是等于，LT小于，LE小于或等于
+                $isSuccess = false;
+                switch ($successCondition) {
+                    case 'GT':
+                        $isSuccess = $requestCode > $successValue ? true : false;;
+                        break;
+                    case 'GE':
+                        $isSuccess = $requestCode >= $successValue ? true : false;;
+                        break;
+                    case 'NE':
+                        $isSuccess = $requestCode != $successValue ? true : false;;
+                        break;
+                    case 'EQ':
+                        $isSuccess = $requestCode == $successValue ? true : false;;
+                        break;
+                    case 'LT':
+                        $isSuccess = $requestCode < $successValue ? true : false;;
+                        break;
+                    case 'LE':
+                        $isSuccess = $requestCode <= $successValue ? true : false;;
+                        break;
+                    default :
+                        $isSuccess = false;
+                }
+
+                $status = $isSuccess ? 'SUCCESS' : 'FAIL';
+                /** 写入最终状态 */
+                $responseParams = ['result' => $result, 'status' => $status, 'response_body' => $response->getBody(), 'response_http_code' => $response->getStatusCode(), 'response_business_code' => $requestCode, 'request_duration' => $duration,];
+            } else {
+                /** 如果curl没有发送成功 标记为error状态 */
+                $responseParams = ['result' => $result, 'status' => 'ERROR', 'request_duration' => $duration];
+            }
+
+            TaskModel::create()->update($responseParams, ['id' => $task['id']]);
 
             /** 解锁 */
             $lock->unlock();

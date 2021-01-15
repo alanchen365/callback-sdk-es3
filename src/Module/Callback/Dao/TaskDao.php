@@ -20,8 +20,35 @@ class TaskDao extends BaseCallbackDao
      */
     public function taskList(array $status): array
     {
-        $list = $this->getAll(['status' => [$status, 'IN'], 'env' => strtoupper(env())], [], ['id' => 'asc'], [], ['id', 'task_code', 'domain', 'path', 'request_header', 'request_method', 'request_type', 'request_param', 'request_count', 'status', 'create_time', 'request_duration', 'env',]);
-        return $list[ResultConst::RESULT_LIST_KEY] ?? [];
+        $env = strtoupper(env());
+        $sql = "SELECT
+                task.`id`,
+                task.`task_code`,# task.`domain`,
+                task.`path`,# task.`request_header`,
+                task.`request_method`,
+                task.`request_type`,
+                task.`request_param`,
+                task.`request_count`,
+                task.`status`,
+                task.`create_time`,
+                task.`request_duration`,#task.`env`,
+                system.system_name,
+                system.request_header,
+                system.domain,
+                system.response_success_value,
+                system.response_key_msg,
+                system.response_key_code,
+                system.response_success_condition,
+                system.`env` 
+            FROM
+                `callback_task` task
+                LEFT JOIN `callback_system` system ON task.system_id = system.id 
+            WHERE
+                task.`status` IN ( 'INVALID', 'ERROR', 'RUN', 'FAIL' ) 
+                AND system.`env` = '{$env}'";
+
+        $list = $this->query($sql);
+        return $list;
     }
 
     /**
