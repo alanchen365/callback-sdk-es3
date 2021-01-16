@@ -135,7 +135,7 @@ class TaskService extends BaseCallbackService
                 if ('JSON' == $task['request_type']) {
                     $curl->setHeader('Content-type', 'application/json;charset=utf-8');
                 }
-                
+
                 /** 是否为跨环境调用 */
                 if (strtoupper(env()) != strtoupper($task['env'])) {
                     throw new WaringException(7110, '环境存在差异');
