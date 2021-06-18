@@ -18,7 +18,7 @@ use EasySwoole\EasySwoole\Task\TaskManager;
 use Es3\Trace;
 use Swoole\Process;
 
-class TaskInvalidProcess extends AbstractProcess
+class RetuningProcess extends AbstractProcess
 {
     public static function getConf(): Config
     {
@@ -34,24 +34,38 @@ class TaskInvalidProcess extends AbstractProcess
 
     protected function run($arg)
     {
-        $redisKey = redisKey(CallbackConstant::REDIS_CALL_CHANNEL);
+        while (true) {
 
-        $redis = \EasySwoole\RedisPool\Redis::defer(EnvConst::REDIS_KEY);
-        $redis->subscribe(function ($instance, $channel, $message) {
-
-            Logger::getInstance()->waring('消息被订阅', 'TaskInvalid');
-
+            $needWait = false;
             try {
-                sleep(rand(3, 6));
+                /** 查询数据库，获得需要发送的消息 */
+                $taskDao = new TaskDao();
+                $taskService = new TaskService();
 
-                /** 一次都没调用过的 需要优先调用 */
-                $gatewayService = new GatewayService();
-                $gatewayService->call([$message]);
-
+                /** 获取未推送的任务 */
+//                $taskList = $taskDao->taskList(['INVALID', 'ERROR', 'RUN', 'FAIL']);
+                $taskList = $taskDao->taskList(['ERROR', 'RUN', 'FAIL']);
+                if (!superEmpty($taskList)) {
+                    foreach ($taskList as $key => $task) {
+                        $taskService->main($task);
+                    }
+                }
+                
+                $needWait = true;
             } catch (\Throwable $throwable) {
-                Logger::getInstance()->waring($throwable->getMessage(), 'CallProcess');
+                $needWait = true;
+                $msg = "系统发生异常:" . $throwable->getCode() . ' ' . $throwable->getMessage();
+                Logger::getInstance()->log($msg, Logger::LOG_LEVEL_ERROR, 'callback_task');
             }
-        }, $redisKey);
+            $this->sleep($needWait);
+        }
+    }
+
+    public function sleep(bool $needWait)
+    {
+        if ($needWait) {
+            sleep(120);
+        }
     }
 
     protected function onPipeReadable(Process $process)
@@ -77,5 +91,6 @@ class TaskInvalidProcess extends AbstractProcess
          * 该回调可选
          * 当该进程出现异常的时候，会执行该回调
          */
+        Logger::getInstance()->log($throwable->getMessage(), Logger::LOG_LEVEL_ERROR, 'callback-process');
     }
 }

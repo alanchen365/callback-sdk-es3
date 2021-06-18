@@ -20,6 +20,8 @@ class TaskDao extends BaseCallbackDao
      */
     public function taskList(array $status): array
     {
+        $status = implode("','", $status);
+
         $env = strtoupper(env());
         $sql = "SELECT
                 task.`id`,
@@ -47,8 +49,9 @@ class TaskDao extends BaseCallbackDao
                 `callback_task` task
                 LEFT JOIN `callback_system` system ON task.system_id = system.id 
             WHERE
-                task.`status` IN ( 'INVALID', 'ERROR', 'RUN', 'FAIL' ) 
-                AND system.`env` = '{$env}'";
+                task.`status` IN ( '$status' )
+                AND system.`env` = '{$env}'
+            ORDER BY task.request_count ASC";
 
         $list = $this->query($sql);
         return $list;

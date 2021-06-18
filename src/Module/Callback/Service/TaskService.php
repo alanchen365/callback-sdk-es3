@@ -16,10 +16,12 @@ use EasySwoole\ORM\Db\ClientInterface;
 use EasySwoole\ORM\DbManager;
 use Es3\Call\Curl;
 use Es3\Exception\ErrorException;
+use Es3\Exception\InfoException;
 use Es3\Exception\NoticeException;
 use Es3\Exception\WaringException;
 use Es3\Lock\FileLock;
 use Es3\Utility\Random;
+use function Symfony\Component\String\s;
 
 class TaskService extends BaseCallbackService
 {
@@ -111,7 +113,7 @@ class TaskService extends BaseCallbackService
             $lock->lock();
 
             /** 更新请求日志 */
-            $taskParams = ['status' => 'RUN', 'request_count' => QueryBuilder::inc(1)];
+            $taskParams = ['request_count' => QueryBuilder::inc(1)];
             TaskModel::create()->update($taskParams, ['id' => $task['id']]);
 
             /** 参数整理 */
@@ -168,8 +170,35 @@ class TaskService extends BaseCallbackService
                 /** 获取执行结果 */
                 $responseBusinessKeyCode = $task['response_key_code'];
                 $responseKeyMsg = $task['response_key_msg'];
-                $result = $requestBody[$responseKeyMsg];
-                $requestCode = $requestBody[$responseBusinessKeyCode];
+
+                /** 获取code来判断请求是否发送成功 如果有 . 就分割 并且重获取该值 */
+                if (strstr($responseBusinessKeyCode, '.')) {
+                    $responseBusinessKeyCodeArr = explode('.', $responseBusinessKeyCode);
+                    $requestCode = $requestBody;
+                    foreach ((array)$responseBusinessKeyCodeArr as $key) {
+                        $requestCode = $requestCode[$key] ?? null;
+                    }
+
+                    if (is_array($requestCode)) {
+                        $requestCode = null;
+                    }
+                } else {
+                    $requestCode = $requestBody[$responseBusinessKeyCode] ?? null;
+                }
+                
+                /** 获取msg来判断请求是否发送成功 如果有 . 就分割 并且重获取该值 */
+                if (strstr($responseKeyMsg, '.')) {
+                    $responseKeyMsgArr = explode('.', $responseKeyMsg);
+                    $result = $requestBody;
+                    foreach ((array)$responseKeyMsgArr as $key) {
+                        $result = $result[$key] ?? null;
+                    }
+                } else {
+                    $result = $requestBody[$responseKeyMsg] ?? null;
+                }
+
+                /** 如果返回值是不是字符串 就强制换算 */
+                $result = is_string($result) ? $result : json_encode($result);
 
                 /** 判断请求失败还是成功 */
                 $successCondition = $task['response_success_condition'];
@@ -216,6 +245,8 @@ class TaskService extends BaseCallbackService
             Logger::getInstance()->log($e->getMessage(), Logger::LOG_LEVEL_ERROR, 'callback-process');
             $lock instanceof \swoole_lock ? $lock->unlock() : null;
         }
+        /** 为防止有任务不断重复调用 间隔0.1秒调用 */
+        usleep(1000000);
     }
 
     /**

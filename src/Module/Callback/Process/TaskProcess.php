@@ -34,20 +34,38 @@ class TaskProcess extends AbstractProcess
 
     protected function run($arg)
     {
-        Logger::getInstance()->log('started ...', Logger::LOG_LEVEL_INFO, 'callback-process');
+        while (true) {
 
-        \EasySwoole\Component\Timer::getInstance()->loop(2 * 60 * 1000, function () {
+            $needWait = false;
             try {
-                $gatewayService = new GatewayService();
-                $gatewayService->call(['INVALID', 'ERROR', 'RUN', 'FAIL']);
+                /** 查询数据库，获得需要发送的消息 */
+                $taskDao = new TaskDao();
+                $taskService = new TaskService();
 
-                Logger::getInstance()->log('running ...', Logger::LOG_LEVEL_INFO, 'callback-process');
+                /** 获取未推送的任务 */
+//                $taskList = $taskDao->taskList(['INVALID', 'ERROR', 'RUN', 'FAIL']);
+                $taskList = $taskDao->taskList(['INVALID']);
+                if (!superEmpty($taskList)) {
+                    foreach ($taskList as $key => $task) {
+                        $taskService->main($task);
+                    }
+                } else {
+                    $needWait = true;
+                }
             } catch (\Throwable $throwable) {
-                Logger::getInstance()->log($throwable->getMessage(), Logger::LOG_LEVEL_ERROR, 'callback-process');
+                $needWait = true;
+                $msg = "系统发生异常:" . $throwable->getCode() . ' ' . $throwable->getMessage();
+                Logger::getInstance()->log($msg, Logger::LOG_LEVEL_ERROR, 'callback_task');
             }
-        });
-            
-        Logger::getInstance()->log('end ...', Logger::LOG_LEVEL_INFO, 'callback-process');
+            $this->sleep($needWait);
+        }
+    }
+
+    public function sleep(bool $needWait)
+    {
+        if ($needWait) {
+            sleep(5);
+        }
     }
 
     protected function onPipeReadable(Process $process)
