@@ -71,6 +71,7 @@ class TaskService extends BaseCallbackService
                 'system_id' => $push['system_id'],
                 'domain' => $push['domain'],
                 'path' => $push['path'],
+                'is_async' => $push['is_async'],
                 'request_header' => json_encode($headers),
                 'request_method' => $push['request_method'],
                 'request_type' => $push['request_type'],
@@ -225,7 +226,7 @@ class TaskService extends BaseCallbackService
                     case 'LE':
                         $isSuccess = $requestCode <= $successValue ? true : false;;
                         break;
-                    default :
+                    default:
                         $isSuccess = false;
                 }
 

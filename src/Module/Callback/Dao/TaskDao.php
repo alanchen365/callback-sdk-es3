@@ -16,11 +16,20 @@ class TaskDao extends BaseCallbackDao
     /**
      * 获取发送任务列表
      * @param array $status
+     * @param int $isAsync 0:所有任务 1:异步任务 2:同步任务
      * @return array
      */
-    public function taskList(array $status): array
+    public function taskList(array $status, int $isAsync = 0): array
     {
         $status = implode("','", $status);
+
+        $where = '';
+        if ($isAsync == 1) {
+            $where = "AND task.`is_async` = 1";
+        }
+        if ($isAsync == 2) {
+            $where = "AND task.`is_async` = 0";
+        }
 
         $env = strtoupper(env());
         $sql = "SELECT
@@ -51,6 +60,7 @@ class TaskDao extends BaseCallbackDao
             WHERE
                 task.`status` IN ( '$status' )
                 AND system.`env` = '{$env}'
+                {$where}
             ORDER BY task.request_count ASC";
 
         $list = $this->query($sql);

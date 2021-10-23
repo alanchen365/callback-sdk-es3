@@ -12,15 +12,6 @@ class SystemApiDao extends BaseCallbackDao
         $this->setModel(new SystemApiModel());
     }
 
-    /**
-     * model
-     * @return SystemApiModel
-     */
-    public function getModel(): SystemApiModel
-    {
-        return $this->model;
-    }
-
     public function pushList(string $apiCode): array
     {
         $env = strtoupper(env());
@@ -37,6 +28,7 @@ class SystemApiDao extends BaseCallbackDao
                 api.api_code,
                 api.api_name,
                 api.path,
+                api.is_async,
                 api.request_method,
                 api.request_type
                 from `callback_system_api`  system_api
@@ -51,5 +43,14 @@ class SystemApiDao extends BaseCallbackDao
 
         $list = $this->query($sql);
         return $list;
+    }
+
+    /**
+     * model
+     * @return SystemApiModel
+     */
+    public function getModel(): SystemApiModel
+    {
+        return $this->model;
     }
 }

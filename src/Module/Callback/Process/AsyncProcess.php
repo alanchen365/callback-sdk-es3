@@ -18,7 +18,7 @@ use EasySwoole\EasySwoole\Task\TaskManager;
 use Es3\Trace;
 use Swoole\Process;
 
-class RetuningProcess extends AbstractProcess
+class AsyncProcess extends AbstractProcess
 {
     public static function getConf(): Config
     {
@@ -39,17 +39,19 @@ class RetuningProcess extends AbstractProcess
             try {
                 /** 查询数据库，获得需要发送的消息 */
                 $taskDao = new TaskDao();
-                $taskService = new TaskService();
 
                 /** 获取未推送的任务 */
-//                $taskList = $taskDao->taskList(['INVALID', 'ERROR', 'RUN', 'FAIL']);
-                $taskList = $taskDao->taskList(['ERROR', 'RUN', 'FAIL']);
+                $taskList = $taskDao->taskList(['INVALID'], 1);
                 if (!superEmpty($taskList)) {
                     foreach ($taskList as $key => $task) {
-                        $taskService->main($task);
+                        /** 异步处理 */
+                        TaskManager::getInstance()->async(function () use ($task) {
+                            $taskService = new TaskService();
+                            $taskService->main($task);
+                        });
                     }
                 }
-                
+
                 $needWait = true;
             } catch (\Throwable $throwable) {
                 $needWait = true;
@@ -63,7 +65,7 @@ class RetuningProcess extends AbstractProcess
     public function sleep(bool $needWait)
     {
         if ($needWait) {
-            sleep(120);
+            sleep(5);
         }
     }
 

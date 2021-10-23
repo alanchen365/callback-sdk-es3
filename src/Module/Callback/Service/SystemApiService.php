@@ -11,6 +11,11 @@ class SystemApiService extends BaseCallbackService
         $this->setDao(new SystemApiDao());
     }
 
+    public function pushList(string $apiCode): array
+    {
+        return $this->getDao()->pushList($apiCode);
+    }
+
     /**
      * dao
      * @return SystemApiDao
@@ -18,10 +23,5 @@ class SystemApiService extends BaseCallbackService
     public function getDao(): SystemApiDao
     {
         return $this->dao;
-    }
-
-    public function pushList(string $apiCode): array
-    {
-        return $this->getDao()->pushList($apiCode);
     }
 }

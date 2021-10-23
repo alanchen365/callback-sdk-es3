@@ -15,6 +15,7 @@ class TaskValidate
         'domain' => '域名',
         'path' => '请求路径',
         'request_header' => '请求头',
+        'is_async' => '是否启用异步进程 0:否 1:是',
         'request_method' => '请求方法',
         'request_type' => '请求类型',
         'request_param' => '请求body',
@@ -42,7 +43,6 @@ class TaskValidate
         }
 
         // 投递任务是否重复
-
         return null;
     }
 

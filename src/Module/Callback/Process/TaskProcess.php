@@ -35,7 +35,6 @@ class TaskProcess extends AbstractProcess
     protected function run($arg)
     {
         while (true) {
-
             $needWait = false;
             try {
                 /** 查询数据库，获得需要发送的消息 */
@@ -44,7 +43,7 @@ class TaskProcess extends AbstractProcess
 
                 /** 获取未推送的任务 */
 //                $taskList = $taskDao->taskList(['INVALID', 'ERROR', 'RUN', 'FAIL']);
-                $taskList = $taskDao->taskList(['INVALID']);
+                $taskList = $taskDao->taskList(['INVALID'], 2);
                 if (!superEmpty($taskList)) {
                     foreach ($taskList as $key => $task) {
                         $taskService->main($task);

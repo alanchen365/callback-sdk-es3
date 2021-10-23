@@ -42,7 +42,6 @@ class GatewayService
             /** 任务投递成功后发布 */
             $redis = \EasySwoole\RedisPool\Redis::defer(EnvConst::REDIS_KEY);
             $redis->publish(redisKey(CallbackConstant::REDIS_CALL_CHANNEL), 'INVALID');
-
         } catch (\Throwable $throwable) {
             !$isTransaction ? DbManager::getInstance()->rollback() : null;
             throw new WaringException($throwable->getCode(), '任务投递异常:' . $throwable->getMessage());
