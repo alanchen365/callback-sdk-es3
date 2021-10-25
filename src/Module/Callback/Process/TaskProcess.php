@@ -43,7 +43,7 @@ class TaskProcess extends AbstractProcess
 
                 /** 获取未推送的任务 */
 //                $taskList = $taskDao->taskList(['INVALID', 'ERROR', 'RUN', 'FAIL']);
-                $taskList = $taskDao->taskList(['INVALID'], 2);
+                $taskList = $taskDao->taskList(['INVALID'], false);
                 if (!superEmpty($taskList)) {
                     foreach ($taskList as $key => $task) {
                         $taskService->main($task);

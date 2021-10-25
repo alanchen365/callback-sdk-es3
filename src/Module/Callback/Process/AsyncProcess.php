@@ -41,7 +41,7 @@ class AsyncProcess extends AbstractProcess
                 $taskDao = new TaskDao();
 
                 /** 获取未推送的任务 */
-                $taskList = $taskDao->taskList(['INVALID'], 1);
+                $taskList = $taskDao->taskList(['INVALID'], true);
                 if (!superEmpty($taskList)) {
                     foreach ($taskList as $key => $task) {
                         /** 异步处理 */

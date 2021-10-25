@@ -48,21 +48,21 @@ class GatewayService
         }
     }
 
-    /**
-     * 开始调用任务
-     */
-    public function call(array $status)
-    {
-        $taskDao = new TaskDao();
-        $taskService = new TaskService();
-
-        $taskList = $taskDao->taskList($status);
-        if (superEmpty($taskList)) {
-            return;
-        }
-
-        foreach ($taskList as $key => $task) {
-            $taskService->main($task);
-        }
-    }
+//    /**
+//     * 开始调用任务
+//     */
+//    public function call(array $status)
+//    {
+//        $taskDao = new TaskDao();
+//        $taskService = new TaskService();
+//
+//        $taskList = $taskDao->taskList($status);
+//        if (superEmpty($taskList)) {
+//            return;
+//        }
+//
+//        foreach ($taskList as $key => $task) {
+//            $taskService->main($task);
+//        }
+//    }
 }

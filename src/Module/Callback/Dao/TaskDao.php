@@ -16,19 +16,19 @@ class TaskDao extends BaseCallbackDao
     /**
      * 获取发送任务列表
      * @param array $status
-     * @param int $isAsync 0:所有任务 1:异步任务 2:同步任务
+     * @param bool $isAsync true 异步任务 false 同步任务
      * @return array
      */
-    public function taskList(array $status, int $isAsync = 0): array
+    public function taskList(array $status, bool $isAsync = null): array
     {
         $status = implode("','", $status);
 
-        $where = '';
-        if ($isAsync == 1) {
-            $where = "AND task.`is_async` = 1";
-        }
-        if ($isAsync == 2) {
-            $where = "AND task.`is_async` = 0";
+        /** 如果尚未指定同步和异步 就传递null 将所有任务查出来 */
+        if ($isAsync === null) {
+            $where = ' ';
+        } else {
+            $async = $isAsync === true ? 1 : 0;
+            $where = "AND task.`is_async` = {$async}";
         }
 
         $env = strtoupper(env());
