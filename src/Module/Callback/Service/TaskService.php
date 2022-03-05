@@ -62,8 +62,8 @@ class TaskService extends BaseCallbackService
             $taskCode = $task->getTaskCode();
             if (superEmpty($taskCode)) {
                 $taskCode = md5(md5(uniqid(microtime(true), true)) . $push['system_code'] ?? null);
+                $taskCode = md5($taskCode . $push['system_code'] ?? null);
             }
-            $taskCode = md5($taskCode . $push['system_code'] ?? null);
             $headers = array_merge(json_decode($push['request_header'], true) ?? [], $task->getRequestHeader() ?? []);
 
             $tasks[] = [
