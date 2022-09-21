@@ -10,6 +10,7 @@ use App\Module\Callback\Queue\TaskFailQueue;
 use App\Module\Callback\Queue\TaskInvalidQueue;
 use App\Module\Callback\Service\GatewayService;
 use App\Module\Callback\Service\TaskService;
+use App\Module\Callback\Util\EnvUtil;
 use EasySwoole\Component\Process\AbstractProcess;
 use EasySwoole\Component\Process\Config;
 use EasySwoole\Component\Timer;
@@ -17,6 +18,7 @@ use EasySwoole\EasySwoole\Logger;
 use EasySwoole\EasySwoole\Task\TaskManager;
 use Es3\Trace;
 use Swoole\Process;
+use EasySwoole\ORM\DbManager;
 
 class TaskProcess extends AbstractProcess
 {
@@ -34,6 +36,10 @@ class TaskProcess extends AbstractProcess
 
     protected function run($arg)
     {
+        if (!EnvUtil::isRun()) {
+            return;
+        }
+
         while (true) {
             $needWait = false;
             try {
@@ -42,8 +48,16 @@ class TaskProcess extends AbstractProcess
                 $taskService = new TaskService();
 
                 /** 获取未推送的任务 */
-//                $taskList = $taskDao->taskList(['INVALID', 'ERROR', 'RUN', 'FAIL']);
-                $taskList = $taskDao->taskList(['INVALID'], false);
+                try {
+                    DbManager::getInstance()->startTransaction();
+
+                    $taskList = $taskDao->taskList(['INVALID'], false);
+                    
+                    DbManager::getInstance()->commit();
+                } catch (\Throwable $throwable) {
+                    DbManager::getInstance()->rollback();
+                }
+
                 if (!superEmpty($taskList)) {
                     foreach ($taskList as $key => $task) {
                         $taskService->main($task);
